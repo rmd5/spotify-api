@@ -48,7 +48,7 @@ module.exports = function (app: Express) {
                     .get("/refresh", controller.refresh))
                 .use("/album", express.Router()
                     .get("/", controller.get_album)
-                    .get("/random", controller.get_random_album))
+                    .get("/random", [key.admin], controller.get_random_album))
             ))
 
         // error 404 message
