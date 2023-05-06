@@ -13,7 +13,8 @@ module.exports = function (app: Express) {
     var corsOptions = {
         origin: [
             "http://localhost:3000",
-            "http://localhost:19006"
+            "http://localhost:19006",
+            "https://daily-jam.pages.dev"
         ]
     }
 
