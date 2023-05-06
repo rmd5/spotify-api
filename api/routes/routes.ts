@@ -7,6 +7,7 @@ import response from '../middlewares/response.middleware';
 import cookieParser from "cookie-parser"
 
 const controller = require("../controllers/spotify.controller")
+const notifications = require("../controllers/notifications.controller")
 
 module.exports = function (app: Express) {
     var corsOptions = {
@@ -49,7 +50,13 @@ module.exports = function (app: Express) {
                 .use("/album", express.Router()
                     .get("/", controller.get_album)
                     .get("/random", [key.admin], controller.get_random_album))
-            ))
+            )
+            
+            .use("/notifications", express.Router()
+                .post("/subscribe", notifications.subscribe)
+                .post("/unsubscribe", notifications.unsubscribe)
+                .get("/send", notifications.send_notification)))
+
 
         // error 404 message
         .use((_req: Request, res: Response) => {
