@@ -39,11 +39,21 @@ interface AlbumResponse {
     albums: Albums
 }
 
+export async function get_all() {
+    let stored_albums: AlbumModel[] = await Album.find({}, {}, { sort: { date: -1 } })
+
+    if (!stored_albums) {
+        return { status: 404, data: null as null, error: "could not find albums" }
+    }
+
+    return { status: 200, data: stored_albums, error: null as null }
+}
+
 export async function get_album() {
-    let stored_album: AlbumModel = await Album.findOne({}, {}, { sort: { 'date' : -1 } })
+    let stored_album: AlbumModel = await Album.findOne({}, {}, { sort: { 'date': -1 } })
 
     if (!stored_album) {
-        return { status: 404, data: null as null, error: "could not find album"}
+        return { status: 404, data: null as null, error: "could not find album" }
     }
 
     return { status: 200, data: stored_album, error: null as null }

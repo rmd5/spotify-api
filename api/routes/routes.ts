@@ -50,6 +50,7 @@ module.exports = function (app: Express) {
                     .get("/refresh", controller.refresh))
                 .use("/album", express.Router()
                     .get("/", controller.get_album)
+                    .get("/all", controller.get_all_albums)
                     .get("/random", [key.admin], controller.get_random_album))
             )
             

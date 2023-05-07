@@ -4,7 +4,7 @@ import querystring from "querystring"
 import agent from "../agents"
 import { v4 as uuid } from "uuid"
 
-import { get_album, random_album } from "./spotify/album.function"
+import { get_album, get_all, random_album } from "./spotify/album.function"
 import { AlbumModel } from "../models/album.model";
 
 interface AccessTokenData {
@@ -148,6 +148,18 @@ exports.get_random_album = async (_req: Request, res: Response) => {
 exports.get_album = async (_req: Request, res: Response) => {
     let status: number, data: AlbumModel | null, error: string | null
     ({ status, data, error } = await get_album())
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    response.WithData(res, data)
+}
+
+exports.get_all_albums = async (_req: Request, res: Response) => {
+    let status: number, data: AlbumModel[] | null, error: string | null
+    ({ status, data, error } = await get_all())
 
     if (status != 200) {
         response.Error(res, status, error)

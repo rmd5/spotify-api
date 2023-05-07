@@ -48,7 +48,7 @@ function send(): any {
             title: "Daily Jam",
             body: "Get your day started with some smoooth jams on toast! Album of the day is -",
             icon: "https://rorydobson.com/static/media/dailyjam.349264fd.png",
-            image: ""
+            image: "",
         },
         topic: "allowList"
     }
