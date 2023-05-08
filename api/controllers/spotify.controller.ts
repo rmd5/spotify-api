@@ -7,6 +7,10 @@ import { v4 as uuid } from "uuid"
 import { get_album, get_all, random_album } from "./spotify/album.function"
 import { AlbumModel } from "../models/album.model";
 
+import db from "../models"
+import { UserModel } from "../models/user.model"
+const User = db.user
+
 interface AccessTokenData {
     access_token: string,
     token_type: string,
@@ -86,6 +90,58 @@ exports.callback = async (req: Request, res: Response) => {
             access_token: access_token,
             refresh_token: refresh_token
         }));
+}
+
+exports.create_user = async (req: Request, res: Response) => {
+    let status: number, data: any, error: string | null
+    let token = req.body.token as string
+
+    console.log(token) as void
+    ({ status, data, error } = await agent.spotify.api.get("/me", {}, token))
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    let stored_user: UserModel = await User.findOneAndUpdate({
+        spotify_id: data.id
+    }, { token: token }, { new: true })
+
+    if (stored_user) {
+        stored_user.updateOne()
+        response.WithData(res, stored_user)
+        return
+    }
+
+    const new_user = new User({
+        display_name: data.display_name,
+        external_urls: data.external_urls,
+        followers: data.followers,
+        href: data.href,
+        spotify_id: data.id,
+        images: data.images,
+        type: data.type,
+        uri: data.uri,
+        token: token
+    })
+
+    await new_user.save()
+
+    response.WithData(res, new_user)
+}
+
+exports.me = async (req: Request, res: Response) => {
+    let stored_user: UserModel = await User.findOne({
+        token: req.query.token
+    })
+
+    if (!stored_user) {
+        response.Error(res, 404, "could not find user")
+        return
+    }
+
+    response.WithData(res, stored_user)
 }
 
 exports.refresh = async (_req: Request, res: Response) => {

@@ -42,18 +42,22 @@ module.exports = function (app: Express) {
 
         .use(`${process.env.BASE_API}`, express.Router()
 
+            .post("/user", controller.create_user)
+            .get("/user", controller.me)
+
             .use("/spotify", express.Router()
                 .use("/auth", express.Router()
                     .get("/", controller.request_access_token)
+                    .get("/me", controller.me)
                     .get("/login", controller.auth)
                     .get('/callback', controller.callback)
                     .get("/refresh", controller.refresh))
                 .use("/album", express.Router()
                     .get("/", controller.get_album)
                     .get("/all", controller.get_all_albums)
-                    .get("/random", [key.admin], controller.get_random_album))
+                    .get("/random", controller.get_random_album))
             )
-            
+
             .use("/notifications", express.Router()
                 .post("/subscribe", notifications.subscribe)
                 .post("/unsubscribe", notifications.unsubscribe)
