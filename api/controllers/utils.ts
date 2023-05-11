@@ -24,11 +24,12 @@ function getRandomSearch(): string {
             break
     }
 
-    switch (getRandomInteger(0, 2)) {
+    switch (getRandomInteger(0, 6)) {
         case 0:
             randomSearch += " tag:hipster"
             break
         case 1:
+        case 2:
             randomSearch += " tag:new"
             break
     }
@@ -38,5 +39,6 @@ function getRandomSearch(): string {
 
 export default {
     getRandomOffset,
-    getRandomSearch
+    getRandomSearch,
+    getRandomInteger
 }

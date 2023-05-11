@@ -49,6 +49,18 @@ export async function get_all() {
     return { status: 200, data: stored_albums, error: null as null }
 }
 
+export default async function update_color(id: string, color: string) {
+    let stored_album: AlbumModel = await Album.findOneAndUpdate({
+        spotify_id: id
+    }, { color: color }, { new: true })
+
+    if (!stored_album) {
+        return { status: 404, data: null as null, error: "could not find album" }
+    }
+
+    return { status: 200, data: stored_album, error: null as null }
+}
+
 export async function get_album() {
     let stored_album: AlbumModel = await Album.findOne({}, {}, { sort: { 'date': -1 } })
 
@@ -60,13 +72,14 @@ export async function get_album() {
 }
 
 export async function random_album(token: string) {
-    let status: number, data: AlbumResponse | null, error: string | null
+    let status: number, data: any | null, error: string | null
 
+    let q = utils.getRandomSearch() as string
     ({ status, data, error } = await agent.spotify.api.get(
         "/search",
         {
             type: "album",
-            q: utils.getRandomSearch(),
+            q: q,
             offset: utils.getRandomOffset(),
             limit: 1,
             market: "GB"
@@ -88,13 +101,31 @@ export async function random_album(token: string) {
         random_album(token)
     }
 
+    ({ status, data, error } = await agent.spotify.api.get("/albums/" + album.id, { market: "GB" }, token))
+
+    console.log(status, data, error)
+
+    if (data?.popularity < 60 && !q.includes("hipster")) {
+        let num = utils.getRandomInteger(0, 4) as number
+        if (num != 0) {
+            random_album(token)
+        }
+    }
+
+    if (data.album_type === "single") {
+        let num = utils.getRandomInteger(0, 2) as number
+        if (num != 0) {
+            random_album(token)
+        }
+    }
+
     const new_album = new Album({
         spotify_id: album.id,
         href: `https://open.spotify.com/embed/album/${album.id}?utm_source=generator`,
-        raw: album
+        raw: data
     })
 
     await new_album.save()
 
-    return { status: 200, data: new_album, erro: null as null }
+    return { status: 200, data: new_album, error: null as null }
 }

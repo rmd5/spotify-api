@@ -4,17 +4,42 @@ import querystring from "querystring"
 import agent from "../agents"
 import { v4 as uuid } from "uuid"
 
-import { get_album, get_all, random_album } from "./spotify/album.function"
+import update_color, { get_album, get_all, random_album } from "./spotify/album.function"
 import { AlbumModel } from "../models/album.model";
 
 import db from "../models"
 import { UserModel } from "../models/user.model"
+import { get_embed } from "./spotify/embed";
 const User = db.user
 
 interface AccessTokenData {
     access_token: string,
     token_type: string,
-    expires_in: number
+    expires_in: number,
+    refresh_token: string
+}
+
+exports.authorize = async (req: Request, res: Response) => {
+    let status: number, data: AccessTokenData | null, error: string | null
+
+    ({ status, data, error } = await agent.spotify.account.authorise(req.body.code, process.env.SPOTIFY_CALLBACK_URL)) as RefreshTokenData
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    let access_token = data.access_token,
+        refresh_token = data.refresh_token;
+
+    ({ status, data, error } = await agent.spotify.api.get("/me", {}, access_token))
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    response.WithData(res, { ...data, refresh_token })
 }
 
 exports.request_access_token = async (_req: Request, res: Response) => {
@@ -94,10 +119,18 @@ exports.callback = async (req: Request, res: Response) => {
 
 exports.create_user = async (req: Request, res: Response) => {
     let status: number, data: any, error: string | null
-    let token = req.body.token as string
 
-    console.log(token) as void
-    ({ status, data, error } = await agent.spotify.api.get("/me", {}, token))
+    ({ status, data, error } = await agent.spotify.account.authorise(req.body.code, process.env.SPOTIFY_CALLBACK_URL)) as RefreshTokenData
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    let access_token = data.access_token,
+        refresh_token = data.refresh_token;
+
+    ({ status, data, error } = await agent.spotify.api.get("/me", {}, access_token))
 
     if (status != 200) {
         response.Error(res, status, error)
@@ -106,7 +139,7 @@ exports.create_user = async (req: Request, res: Response) => {
 
     let stored_user: UserModel = await User.findOneAndUpdate({
         spotify_id: data.id
-    }, { token: token }, { new: true })
+    }, { token: access_token, refresh_token: refresh_token }, { new: true })
 
     if (stored_user) {
         stored_user.updateOne()
@@ -123,7 +156,8 @@ exports.create_user = async (req: Request, res: Response) => {
         images: data.images,
         type: data.type,
         uri: data.uri,
-        token: token
+        token: access_token,
+        refresh_token: refresh_token
     })
 
     await new_user.save()
@@ -144,22 +178,47 @@ exports.me = async (req: Request, res: Response) => {
     response.WithData(res, stored_user)
 }
 
-exports.refresh = async (_req: Request, res: Response) => {
+exports.refresh = async (req: Request, res: Response) => {
     let status: number, data: any, error: string | null
+    let refresh_token = req.query.refresh_token as string
+    console.log(refresh_token) as void
+    ({ status, data, error } = await refresh(refresh_token))
 
-    ({ status, data, error } = await refresh())
+    console.log(status, data, error)
 
     if (status != 200) {
         response.Error(res, status, error)
         return
     }
 
-    response.WithData(res, data)
+    ({ status, data, error } = await agent.spotify.api.get("/me", {}, data.access_token))
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    let stored_user: UserModel = await User.findOneAndUpdate({
+        spotify_id: data.id
+    }, { token: data.access_token, refresh_token: refresh_token }, { new: true })
+
+    if (stored_user) {
+        stored_user.updateOne()
+        response.WithData(res, stored_user)
+        return
+    }
+
+    response.Error(res, 404, "user not found")
 }
 
-async function refresh(): Promise<RefreshTokenData> {
+exports.embed = async (_req: Request, res: Response) => {
+    let html = await get_embed()
+    res.send(html)
+}
+
+async function refresh(refresh_token: string): Promise<RefreshTokenData> {
     let status: number, data: any, error: string | null
-    let token: string = process.env.SPOTIFY_BASE_REFRESH as string
+    let token: string = refresh_token as string
 
     ({ status, data, error } = await agent.spotify.account.refresh(token))
 
@@ -171,7 +230,7 @@ async function withReattempt(res: Response, func: (token: string) => any) {
     ({ status, data, error } = await func("BQAlakLNHuOhNYFRxfOk7y7bYgZYWX_KFKrkKg0yojmREubx5wpkmrU2dlHIrMtLFdTlHlJ7pSNR-gM36eOf9INthB5dc-28IuSyqh2YT3ade2BGLqiO"))
 
     if (status == 401) {
-        let refreshResp = await refresh()
+        let refreshResp = await refresh(process.env.SPOTIFY_BASE_REFRESH)
 
         if (refreshResp.status != 200) {
             response.Error(res, refreshResp.status, refreshResp.error)
@@ -216,6 +275,18 @@ exports.get_album = async (_req: Request, res: Response) => {
 exports.get_all_albums = async (_req: Request, res: Response) => {
     let status: number, data: AlbumModel[] | null, error: string | null
     ({ status, data, error } = await get_all())
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    response.WithData(res, data)
+}
+
+exports.color = async (req: Request, res: Response) => {
+    let status: number, data: AlbumModel | null, error: string | null
+    ({ status, data, error } = await update_color(req.body.id, req.body.color))
 
     if (status != 200) {
         response.Error(res, status, error)

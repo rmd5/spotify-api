@@ -10,7 +10,8 @@ export interface UserModel extends Document {
     images: Object[],
     type: String,
     uri: String,
-    token: String
+    token: String,
+    refresh_token: String
 }
 
 const UserSchema: Schema = new Schema({
@@ -23,7 +24,8 @@ const UserSchema: Schema = new Schema({
     images: Object,
     type: String,
     uri: String,
-    token: String
+    token: String,
+    refresh_token: String
 });
 
 export default mongoose.model<UserModel>('User', UserSchema);

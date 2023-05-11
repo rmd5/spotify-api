@@ -4,14 +4,16 @@ export interface AlbumModel extends Document {
     date: Date,
     spotify_id: String,
     href: String,
-    raw: any
+    raw: any,
+    color: string
 }
 
 const AlbumSchema: Schema = new Schema({
     date: { type: Date, default: Date.now },
     spotify_id: String,
     href: String,
-    raw: Object
+    raw: Object,
+    color: String
 });
 
 export default mongoose.model<AlbumModel>('Album', AlbumSchema);
