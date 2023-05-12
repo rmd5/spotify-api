@@ -216,6 +216,25 @@ exports.embed = async (_req: Request, res: Response) => {
     res.send(html)
 }
 
+exports.get_album_from_spotify = async (req: Request, res: Response) => {
+    let status: number, data: any, error: string | null
+    let token = req.query.token as string
+    let id = req.query.album as string
+    ({ status, data, error } = await agent.spotify.api.get("/albums/" + id, { market: "GB" }, token))
+
+    if (status != 200) {
+        response.Error(res, status, error)
+        return
+    }
+
+    let body = {
+        spotify_id: data.id,
+        href: `https://open.spotify.com/embed/album/${data.id}?utm_source=generator`,
+        raw: data
+    }
+    response.WithData(res, body)
+}
+
 async function refresh(refresh_token: string): Promise<RefreshTokenData> {
     let status: number, data: any, error: string | null
     let token: string = refresh_token as string

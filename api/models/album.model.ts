@@ -5,7 +5,9 @@ export interface AlbumModel extends Document {
     spotify_id: String,
     href: String,
     raw: any,
-    color: string
+    color: string,
+    other_albums: any,
+    similar_artists: any
 }
 
 const AlbumSchema: Schema = new Schema({
@@ -13,7 +15,9 @@ const AlbumSchema: Schema = new Schema({
     spotify_id: String,
     href: String,
     raw: Object,
-    color: String
+    color: String,
+    other_albums: Object,
+    similar_artists: Object
 });
 
 export default mongoose.model<AlbumModel>('Album', AlbumSchema);

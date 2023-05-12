@@ -68,7 +68,7 @@ export default {
                 .set("Authorization", `Bearer ${token}`)
                 .query(params)
                 .then((res: superagent.Response) => {
-                    return { status: res.statusCode, data: res.body, error: null }
+                    return { status: res.statusCode || 200, data: res.body, error: null }
                 })
                 .catch((reason) => {
                     return { status: reason?.response?.statusCode, data: null, error: reason?.response?.body?.error?.message }

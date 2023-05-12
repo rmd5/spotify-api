@@ -57,7 +57,8 @@ module.exports = function (app: Express) {
                     .get("/", controller.get_album)
                     .get("/all", controller.get_all_albums)
                     .get("/random", controller.get_random_album)
-                    .patch("/color", controller.color))
+                    .patch("/color", controller.color)
+                    .get("/request", controller.get_album_from_spotify))
                 .get("/embed", controller.embed)
             )
 
