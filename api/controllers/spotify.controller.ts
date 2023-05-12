@@ -122,6 +122,8 @@ exports.create_user = async (req: Request, res: Response) => {
 
     ({ status, data, error } = await agent.spotify.account.authorise(req.body.code, process.env.SPOTIFY_CALLBACK_URL)) as RefreshTokenData
 
+    console.log("AUTH", status, data, error)
+
     if (status != 200) {
         response.Error(res, status, error)
         return
@@ -131,6 +133,8 @@ exports.create_user = async (req: Request, res: Response) => {
         refresh_token = data.refresh_token;
 
     ({ status, data, error } = await agent.spotify.api.get("/me", {}, access_token))
+
+    console.log("ME", status, data, error)
 
     if (status != 200) {
         response.Error(res, status, error)
