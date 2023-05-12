@@ -98,24 +98,22 @@ export async function random_album(token: string) {
     })
 
     if (stored_album) {
-        random_album(token)
+        return random_album(token)
     }
 
     ({ status, data, error } = await agent.spotify.api.get("/albums/" + album.id, { market: "GB" }, token))
-
-    console.log(status, data, error)
-
+    
     if (data?.popularity < 60 && !q.includes("hipster")) {
-        let num = utils.getRandomInteger(0, 4) as number
+        let num = utils.getRandomInteger(0, 7) as number
         if (num != 0) {
-            random_album(token)
+            return random_album(token)
         }
     }
 
     if (data.album_type === "single") {
         let num = utils.getRandomInteger(0, 2) as number
         if (num != 0) {
-            random_album(token)
+            return random_album(token)
         }
     }
 
