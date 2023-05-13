@@ -4,7 +4,7 @@ import querystring from "querystring"
 import agent from "../agents"
 import { v4 as uuid } from "uuid"
 
-import update_color, { get_album, get_all, random_album } from "./spotify/album.function"
+import update_color, { get_album, get_album_from_spotify, get_all, random_album } from "./spotify/album.function"
 import { AlbumModel } from "../models/album.model";
 
 import db from "../models"
@@ -217,22 +217,7 @@ exports.embed = async (_req: Request, res: Response) => {
 }
 
 exports.get_album_from_spotify = async (req: Request, res: Response) => {
-    let status: number, data: any, error: string | null
-    let token = req.query.token as string
-    let id = req.query.album as string
-    ({ status, data, error } = await agent.spotify.api.get("/albums/" + id, { market: "GB" }, token))
-
-    if (status != 200) {
-        response.Error(res, status, error)
-        return
-    }
-
-    let body = {
-        spotify_id: data.id,
-        href: `https://open.spotify.com/embed/album/${data.id}?utm_source=generator`,
-        raw: data
-    }
-    response.WithData(res, body)
+    withReattempt(res, () => get_album_from_spotify(req.query.token as string, req.query.album as string))
 }
 
 async function refresh(refresh_token: string): Promise<RefreshTokenData> {

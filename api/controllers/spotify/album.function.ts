@@ -138,17 +138,19 @@ export async function random_album(token: string) {
             images: data.images,
             popularity: data.popularity,
             name: data.name,
-            tracks: data.tracks.items.map((e: any) => {
-                return {
-                    duration_ms: e.duration_ms,
-                    explicit: e.explicit,
-                    is_local: e.is_local,
-                    id: e.id,
-                    name: e.name,
-                    uri: e.uri,
-                    artists: e.artists
-                }
-            })
+            tracks: {
+                items: data.tracks.items.map((e: any) => {
+                    return {
+                        duration_ms: e.duration_ms,
+                        explicit: e.explicit,
+                        is_local: e.is_local,
+                        id: e.id,
+                        name: e.name,
+                        uri: e.uri,
+                        artists: e.artists
+                    }
+                })
+            }
         },
         other_albums: undefined as any,
         similar_artists: undefined as any
@@ -175,6 +177,7 @@ export async function random_album(token: string) {
 
     result.other_albums = data?.items.map((e: any) => {
         return {
+            album_type: e.album_type,
             id: e.id,
             name: e.name,
             uri: e.uri,
@@ -207,4 +210,86 @@ export async function random_album(token: string) {
     let res = await new_album.save()
 
     return { status: 200, data: result, error: null as null }
+}
+
+export async function get_album_from_spotify(token: string, id: string) {
+    let status: number, data: any, error: string | null
+    ({ status, data, error } = await agent.spotify.api.get("/albums/" + id, { market: "GB" }, token))
+
+    if (status != 200) {
+        return { status, data, error }
+    }
+
+    let result = {
+        spotify_id: data.id,
+        href: `https://open.spotify.com/embed/album/${data.id}?utm_source=generator`,
+        raw: {
+            artists: data.artists.map((e: any) => {
+                return {
+                    id: e.id,
+                    name: e.name,
+                    uri: e.uri
+                }
+            }),
+            genres: data.genres,
+            id: data.id,
+            uri: data.uri,
+            images: data.images,
+            popularity: data.popularity,
+            name: data.name,
+            tracks: {
+                items: data.tracks.items.map((e: any) => {
+                    return {
+                        duration_ms: e.duration_ms,
+                        explicit: e.explicit,
+                        is_local: e.is_local,
+                        id: e.id,
+                        name: e.name,
+                        uri: e.uri,
+                        artists: e.artists
+                    }
+                })
+            }
+        },
+        other_albums: undefined as any,
+        similar_artists: undefined as any
+    }
+
+    let artist_id = data.artists[0].id as string
+
+    ({ status, data, error } = await agent.spotify.api.get("/artists/" + artist_id + "/albums", { market: "GB" }, token))
+
+    if (error != null) {
+        return { status, data, error }
+    }
+
+    result.other_albums = data?.items.map((e: any) => {
+        return {
+            album_type: e.album_type,
+            id: e.id,
+            name: e.name,
+            uri: e.uri,
+            images: e.images
+        }
+    }) as string
+
+    ({ data, error } = await agent.spotify.api.get("/artists/" + artist_id + "/related-artists", {}, token))
+
+    if (error != null) {
+        return { status, data, error }
+    }
+
+    result.similar_artists = data.artists.map((e: any) => {
+        return {
+            id: e.id,
+            uri: e.uri,
+            name: e.name,
+            popularity: e.popularity,
+            followers: e.followers,
+            genres: e.genres,
+            images: e.images
+        }
+    })
+
+    return { status: 200, data: result, error: null }
 }
