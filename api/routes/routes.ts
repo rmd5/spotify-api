@@ -8,6 +8,7 @@ import cookieParser from "cookie-parser"
 
 const controller = require("../controllers/spotify.controller")
 const notifications = require("../controllers/notifications.controller")
+const saving = require("../controllers/saved.controller")
 
 module.exports = function (app: Express) {
     var corsOptions = {
@@ -61,6 +62,11 @@ module.exports = function (app: Express) {
                     .get("/request", controller.get_album_from_spotify))
                 .get("/embed", controller.embed)
             )
+
+            .use("/saved", express.Router()
+                .get("/get", saving.get_saved)
+                .post("/add", saving.save)
+                .delete("/delete", saving.delete))
 
             .use("/notifications", express.Router()
                 .post("/subscribe", notifications.subscribe)

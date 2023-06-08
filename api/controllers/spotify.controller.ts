@@ -11,6 +11,7 @@ import db from "../models"
 import { UserModel } from "../models/user.model"
 import { get_embed } from "./spotify/embed";
 const User = db.user
+const Saved = db.saved
 
 interface AccessTokenData {
     access_token: string,
@@ -166,7 +167,7 @@ exports.create_user = async (req: Request, res: Response) => {
 }
 
 exports.me = async (req: Request, res: Response) => {
-    let stored_user: UserModel = await User.findOne({
+    let stored_user: any = await User.findOne({
         token: req.query.token
     })
 
@@ -175,7 +176,9 @@ exports.me = async (req: Request, res: Response) => {
         return
     }
 
-    response.WithData(res, stored_user)
+    let stored_saves = await Saved.find({ user_id: stored_user?.spotify_id })
+    
+    response.WithData(res, { ...stored_user?._doc, saved: stored_saves })
 }
 
 exports.refresh = async (req: Request, res: Response) => {
