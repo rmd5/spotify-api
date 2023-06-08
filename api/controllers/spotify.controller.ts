@@ -10,6 +10,7 @@ import { AlbumModel } from "../models/album.model";
 import db from "../models"
 import { UserModel } from "../models/user.model"
 import { get_embed } from "./spotify/embed";
+import { GetSaved } from "./saved.controller";
 const User = db.user
 const Saved = db.saved
 
@@ -176,8 +177,8 @@ exports.me = async (req: Request, res: Response) => {
         return
     }
 
-    let stored_saves = await Saved.find({ user_id: stored_user?.spotify_id })
-    
+    let stored_saves = await GetSaved(stored_user?.spotify_id)
+
     response.WithData(res, { ...stored_user?._doc, saved: stored_saves })
 }
 
